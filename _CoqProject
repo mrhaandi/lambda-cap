@@ -1,0 +1,15 @@
+-R . lambda_cap
+./UserTactics.v
+./ListFacts.v
+./MiscFacts.v
+./Seq.v
+./SSTS.v
+./Label.v
+./Formula.v
+./Term.v
+./Derivation.v
+./CD_Derivation.v
+./Encoding.v
+./Soundness.v
+./Completeness.v
+./MainResult.v
