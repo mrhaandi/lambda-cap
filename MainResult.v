@@ -10,13 +10,15 @@ Require Import List.
 Import ListNotations.
 (*common header end*)
 
-
 Require Import Derivation.
 Require Import CD_Derivation.
 Require Import Encoding.
 Require Import Soundness.
 Require Import Completeness.
-
+Require Import UserTactics.
+Require Import Seq.
+Require Import Omega.
+Require Import Psatz.
 
 (*
 given set "rs" of rewriting rules of shape ab -> cd,
@@ -45,3 +47,18 @@ eauto.
 Qed.
 
 Print Assumptions correctness.
+
+(*show that all environment types are at most rank 2 and the goal type is at most rank 3 (actually rank 0)*)
+Lemma rank_bound : 
+  (forall (n : nat), 
+    rank_formula' n (singleton (atom triangle)) -> n <= 3) /\ 
+  (forall (rs : list rule) (x : label) (phi : formula') (n : nat), 
+    In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' n phi -> n <= 2).
+Proof.
+split; intros.
+decompose_rank; do ? constructor.
+apply : rank_environment_bound; eassumption.
+Qed.
+
+
+
