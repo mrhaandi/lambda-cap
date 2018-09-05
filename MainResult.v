@@ -15,10 +15,6 @@ Require Import CD_Derivation.
 Require Import Encoding.
 Require Import Soundness.
 Require Import Completeness.
-Require Import UserTactics.
-Require Import Seq.
-Require Import Omega.
-Require Import Psatz.
 
 (*
 given set "rs" of rewriting rules of shape ab -> cd,
