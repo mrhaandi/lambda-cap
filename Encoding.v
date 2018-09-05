@@ -16,6 +16,7 @@ Require Import Formula.
 Require Import Term.
 
 Require Import Omega.
+Require Import Psatz.
 
 Require Import ListFacts.
 Require Import UserTactics.
@@ -368,43 +369,25 @@ all: firstorder (subst; try done).
 Qed.
 
 
-Lemma rank_environment_bound : forall (rs : list rule) (x : label) (phi : formula') (n : nat), 
-  In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' n phi -> n <= 2.
+Lemma rank_environment_bound : forall (rs : list rule) (x : label) (phi : formula'), 
+  In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' phi <= 2.
 Proof.
 intros until 0.
 autorewrite with lookup_Γ.
-firstorder; subst.
-1-4: decompose_rank.
-1-4: cbn; do ? constructor.
+firstorder; subst; cbn.
+1-4: omega.
 
-gimme rank_formula'; clear.
+clear.
 gimme rule; case; case => ? ?; case => ? ?.
 rewrite /s_rule.
 move : (get_symbol_bound rs) => m; clear.
-case : m; cbn.
+case : m; cbn; first omega.
 
-intros; decompose_rank; cbn; do ? constructor.
-
-move => m.
-inversion.
-gimme rank_formula'; inversion.
-do ? (gimme rank_formula; inversion).
-do 4 (gimme rank_formula'; inversion).
-do ? (gimme rank_formula; inversion).
-gimme rank_formula'; clear.
+move => m; clear.
 move : {1 2 3}(0) => i.
-do 2 gimme nat.
-elim : m.
+elim : m i; cbn; first (intros; omega).
 
-intros; decompose_rank; cbn; do ? constructor.
-
-move => m IH n i; cbn.
-inversion. 
-do ? (gimme rank_formula; inversion).
-do 2 (gimme rank_formula'; inversion).
-do ? (gimme rank_formula; inversion).
-
-gimme rank_formula' => H.
-move /(_ _ _ H) : IH; clear; cbn.
-gimme nat; case; auto.
+move => m IH i.
+move /(_ (S i)) : IH.
+lia.
 Qed.

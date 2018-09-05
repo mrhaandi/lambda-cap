@@ -46,15 +46,12 @@ Print Assumptions correctness.
 
 (*show that all environment types are at most rank 2 and the goal type is at most rank 3 (actually rank 0)*)
 Lemma rank_bound : 
-  (forall (n : nat), 
-    rank_formula' n (singleton (atom triangle)) -> n <= 3) /\ 
-  (forall (rs : list rule) (x : label) (phi : formula') (n : nat), 
-    In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' n phi -> n <= 2).
+  (rank_formula' (singleton (atom triangle)) <= 3) /\ 
+  (forall (rs : list rule) (x : label) (phi : formula'), 
+    In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' phi <= 2).
 Proof.
 split; intros.
-decompose_rank; do ? constructor.
+cbn; do ? constructor.
 apply : rank_environment_bound; eassumption.
 Qed.
-
-
 

@@ -25,6 +25,22 @@ Inductive formula : Set :=
   | arr (phi : list' formula) (t : formula) : formula.
 (*intersections are non-empty in the Coppo-Dezani type assingnment system*)
 
+(*used to define rank, lists with at least two elements are assigned at least the value 1*)
+Definition rank_formula_aux' (f : formula -> nat) : list' formula -> nat :=
+  fix maxby_rec' (l: list' formula) :=
+    match l with
+    | (singleton x) => f x
+    | (cons' x xs) => Nat.max (maxby_rec' xs) (Nat.max (f x) 1)
+    end.
+
+Fixpoint rank_formula (t : formula) : nat :=
+  match t with
+  | (atom _) => 0
+  | (arr phi s) => Nat.max (1 + rank_formula_aux' rank_formula phi) (rank_formula s)
+  end.
+
+Definition rank_formula' (phi : list' formula) := rank_formula_aux' rank_formula phi.
+
 
 Fixpoint to_list (A : Type) (l : list' A) : list A :=
   match l with
@@ -69,6 +85,7 @@ Definition formula_to_singleton (s : formula) : formula' := singleton s.
 Coercion formula_to_singleton : formula >-> formula'.
 Coercion label_to_atom : label >-> formula. 
 
+(*
 Inductive rank_formula : nat -> formula -> Prop :=
   | rank_atom : forall (a : label), rank_formula 0 (atom a)
   | rank_arr : forall (phi : list' formula) (t : formula) (n m : nat), 
@@ -79,12 +96,14 @@ with rank_formula' : nat -> formula' -> Prop :=
   | rank_cons' : forall (t : formula) (phi : list' formula) (n m : nat), 
     rank_formula n t -> rank_formula' m phi -> rank_formula' (Nat.max 1 (Nat.max n m)) (cons' t phi).
 
+
 Ltac decompose_rank := 
   do ? (
   match goal with 
   | [H : rank_formula' _ _ |- _] => move : H; inversion 
   | [H : rank_formula _ _ |- _] => move : H; inversion 
   end).
+*)
 
 Lemma forall_exists_in_formula' : forall (P : formula -> Prop) (phi : formula'), Forall P phi -> exists (s : formula), In s phi /\ P s.
 Proof.
