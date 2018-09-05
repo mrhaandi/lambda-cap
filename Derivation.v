@@ -21,34 +21,7 @@ Require Import MiscFacts.
 
 Definition environment : Set := list (label * formula').
 
-(*van Bakel, Strict Intersection Types for the Lambda Calculus, p. 11, 3.2 The Coppo-Dezani type assignment system*)
-(*
-Inductive derivation : environment -> term -> formula → Prop :=
-  | ax : forall (Γ: environment) (x : label) (phi: formula') (t : formula), 
-    In (x, phi) Γ -> In t phi -> derivation Γ (free_var x) t
-  | intro_arr : forall (Γ: environment) (M : term) (x : label) (phi : formula') (t : formula), 
-    derivation ((x, phi) :: Γ) M t → derivation Γ (term_abs (bind x 0 M)) (arr phi t)
-  | elim_arr : forall (Γ: environment) (M N : term) (phi : formula') (t : formula), 
-    derivation Γ M (arr phi t) → Forall (derivation Γ N) phi → derivation Γ (term_app M N) t.
-
-(*first paramater n contains an upper bound on the derivation depth*)
-Inductive derivation_depth : nat -> environment -> term -> formula → Prop :=
-  | ax_depth : forall (n : nat) (Γ: environment) (x : label) (phi: formula') (t : formula), 
-    In (x, phi) Γ -> In t phi -> derivation_depth n Γ (free_var x) t
-  | intro_arr_depth : forall (n : nat) (Γ: environment) (M : term) (x : label) (phi : formula') (t : formula), 
-    derivation_depth n ((x, phi) :: Γ) M t → derivation_depth (S n) Γ (term_abs (bind x 0 M)) (arr phi t)
-  | elim_arr_depth : forall (n : nat) (Γ: environment) (M N : term) (phi : formula') (t : formula), 
-    derivation_depth n Γ M (arr phi t) → Forall (derivation_depth n Γ N) phi → derivation_depth (S n) Γ (term_app M N) t.
-
-Inductive derivable (Γ: environment) (t : formula) : Prop :=
-  | derive : forall (M : term), derivation Γ M t -> derivable Γ t.
-
-Lemma exists_depth : forall (Γ: environment) (M : term) (t : formula), derivation Γ M t -> exists (n : nat), derivation_depth n Γ M t.
-Admitted.
-*)
-
 Definition fresh_in_environment (x : label) (Γ : environment) := Forall (fun (e : label * formula') => let (y, _) := e in x <> y) Γ.
-
 
 (*first paramater n contains an upper bound on the derivation depth*)
 Inductive derivation : nat -> environment -> term -> formula → Prop :=
@@ -58,7 +31,6 @@ Inductive derivation : nat -> environment -> term -> formula → Prop :=
     (forall (x : label), derivation n ((x, phi) :: Γ) (instantiate x 0 M) t) → derivation (S n) Γ (term_abs M) (arr phi t)
   | elim_arr : forall (n : nat) (Γ: environment) (M N : term) (phi : formula') (t : formula), 
     derivation n Γ M (arr phi t) → Forall (derivation n Γ N) phi → derivation (S n) Γ (term_app M N) t.
-
 
 (*
 Conjecture normalization : forall (m : nat) (Γ: environment) (M :term) (t: formula), 

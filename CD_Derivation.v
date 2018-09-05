@@ -249,20 +249,15 @@ gimme well_formed_environment; by inversion.
 Qed.
 
 
-Theorem strict_cd_derivation_correctness : forall (Γ: environment) (M : term) (t : formula), 
-  (exists (n : nat), well_formed_environment Γ /\ derivation n Γ M t)
-  <->
-  strict_cd_derivation Γ M t.
+(*typing environments may be arbitrarily permuted or extended as long as well-formedness is preserved*)
+Theorem cd_weakening : ∀ (Γ Γ': environment) (M: term) (t: formula), 
+  cd_derivation Γ M t -> well_formed_environment Γ' -> (∀ (p : label * formula'), In p Γ -> In p Γ') -> cd_derivation Γ' M t.
 Proof.
-intros.
-split.
-
-move => [n [Hwf HD]].
-eauto using strict_cd_derivation_completeness.
-
-move => H.
-have := strict_cd_derivation_soundness H.
-have := strict_cd_derivation_has_well_formed_environment H.
-firstorder done.
+intros; gimme cd_derivation.
+move /cd_derivation_soundness.
+move /strict_cd_derivation_soundness => [n].
+move /weakening. move /(_ _ ltac:(eassumption)).
+move /strict_cd_derivation_completeness. move /(_ ltac:(assumption)).
+apply /cd_derivation_completeness.
 Qed.
 
