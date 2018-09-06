@@ -124,8 +124,8 @@ Lemma instantiate_normal_form : forall (N : term) (x : label) (n : nat),
   normal_form N -> normal_form (instantiate x n N).
 Proof.
 move => N x n.
-suff : (normal_form N → normal_form (instantiate x n N)) /\ 
-  (head_form N → head_form (instantiate x n N)); first intuition.
+suff : (normal_form N -> normal_form (instantiate x n N)) /\ 
+  (head_form N -> head_form (instantiate x n N)); first intuition.
 elim : N n.
 intros until 0; cbn; auto.
 move => n n'; cbn; case : (n =? n'); auto using normal_form, head_form.

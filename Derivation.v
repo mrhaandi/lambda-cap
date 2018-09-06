@@ -24,22 +24,22 @@ Definition environment : Set := list (label * formula').
 Definition fresh_in_environment (x : label) (Γ : environment) := Forall (fun (e : label * formula') => let (y, _) := e in x <> y) Γ.
 
 (*first paramater n contains an upper bound on the derivation depth*)
-Inductive derivation : nat -> environment -> term -> formula → Prop :=
+Inductive derivation : nat -> environment -> term -> formula -> Prop :=
   | ax : forall (n : nat) (Γ: environment) (x : label) (phi: formula') (t : formula), 
     In (x, phi) Γ -> In t phi -> derivation n Γ (free_var x) t
   | intro_arr : forall (n : nat) (Γ: environment) (M : term) (phi : formula') (t : formula), 
-    (forall (x : label), derivation n ((x, phi) :: Γ) (instantiate x 0 M) t) → derivation (S n) Γ (term_abs M) (arr phi t)
+    (forall (x : label), derivation n ((x, phi) :: Γ) (instantiate x 0 M) t) -> derivation (S n) Γ (term_abs M) (arr phi t)
   | elim_arr : forall (n : nat) (Γ: environment) (M N : term) (phi : formula') (t : formula), 
-    derivation n Γ M (arr phi t) → Forall (derivation n Γ N) phi → derivation (S n) Γ (term_app M N) t.
+    derivation n Γ M (arr phi t) -> Forall (derivation n Γ N) phi -> derivation (S n) Γ (term_app M N) t.
 
 (*
 Conjecture normalization : forall (m : nat) (Γ: environment) (M :term) (t: formula), 
-  derivation m Γ M t → exists (n : nat) (N : term), normal_form N /\ derivation n Γ N t.
+  derivation m Γ M t -> exists (n : nat) (N : term), normal_form N /\ derivation n Γ N t.
 *)
 
 (*environments may be extended or permuted*)
-Theorem weakening : ∀ (n : nat) (Γ Γ': environment) (M: term) (t: formula), 
-  derivation n Γ M t → (∀ (p : label * formula'), In p Γ → In p Γ') → derivation n Γ' M t.
+Theorem weakening : forall (n : nat) (Γ Γ': environment) (M: term) (t: formula), 
+  derivation n Γ M t -> (forall (p : label * formula'), In p Γ -> In p Γ') -> derivation n Γ' M t.
 Proof.
 elim.
 (*base case*)

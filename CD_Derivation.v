@@ -28,7 +28,7 @@ Inductive well_formed_term (M : term) : Prop :=
   | wft_lc : lc 0 M -> well_formed_term M.
 
 (*van Bakel, Strict Intersection Types for the Lambda Calculus, p. 11, 3.2 The Coppo-Dezani type assignment system*)
-Inductive cd_derivation : environment -> term -> formula' → Prop :=
+Inductive cd_derivation : environment -> term -> formula' -> Prop :=
   | cd_elim_cap : forall (Γ: environment) (x : label) (phi: formula') (t : formula), 
     well_formed_environment Γ -> 
     In (x, phi) Γ -> In t phi -> cd_derivation Γ (free_var x) (singleton t)
@@ -40,11 +40,11 @@ Inductive cd_derivation : environment -> term -> formula' → Prop :=
     cd_derivation ((x, phi) :: Γ) M (singleton t) -> cd_derivation Γ (term_abs (bind x 0 M)) (singleton (arr phi t))
   | cd_elim_arr : forall (Γ: environment) (M N : term) (phi : formula') (t : formula), 
     well_formed_environment Γ -> well_formed_term M -> well_formed_term N ->
-    cd_derivation Γ M (singleton (arr phi t)) → cd_derivation Γ N phi → cd_derivation Γ (term_app M N) (singleton t).
+    cd_derivation Γ M (singleton (arr phi t)) -> cd_derivation Γ N phi -> cd_derivation Γ (term_app M N) (singleton t).
 
 
 (*strict version of the Coppo-Dezani type assignment system*)
-Inductive strict_cd_derivation : environment -> term -> formula → Prop :=
+Inductive strict_cd_derivation : environment -> term -> formula -> Prop :=
   | strict_cd_ax : forall (Γ: environment) (x : label) (phi: formula') (t : formula), 
     well_formed_environment Γ -> 
     In (x, phi) Γ -> In t phi -> strict_cd_derivation Γ (free_var x) t
@@ -53,7 +53,7 @@ Inductive strict_cd_derivation : environment -> term -> formula → Prop :=
     strict_cd_derivation ((x, phi) :: Γ) M t -> strict_cd_derivation Γ (term_abs (bind x 0 M)) (arr phi t)
   | strict_cd_elim_arr : forall (Γ: environment) (M N : term) (phi : formula') (t : formula), 
     well_formed_environment Γ -> well_formed_term M -> well_formed_term N ->
-    strict_cd_derivation Γ M (arr phi t) → Forall (strict_cd_derivation Γ N) phi → strict_cd_derivation Γ (term_app M N) t.
+    strict_cd_derivation Γ M (arr phi t) -> Forall (strict_cd_derivation Γ N) phi -> strict_cd_derivation Γ (term_app M N) t.
 
 
 Lemma cd_derivation_soundness : forall (Γ: environment) (M : term) (t : formula),
@@ -250,8 +250,8 @@ Qed.
 
 
 (*typing environments may be arbitrarily permuted or extended as long as well-formedness is preserved*)
-Theorem cd_weakening : ∀ (Γ Γ': environment) (M: term) (t: formula), 
-  cd_derivation Γ M t -> well_formed_environment Γ' -> (∀ (p : label * formula'), In p Γ -> In p Γ') -> cd_derivation Γ' M t.
+Theorem cd_weakening : forall (Γ Γ': environment) (M: term) (t: formula), 
+  cd_derivation Γ M t -> well_formed_environment Γ' -> (forall (p : label * formula'), In p Γ -> In p Γ') -> cd_derivation Γ' M t.
 Proof.
 intros; gimme cd_derivation.
 move /cd_derivation_soundness.
