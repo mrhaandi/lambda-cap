@@ -41,21 +41,14 @@ firstorder (subst; try done).
 all: gimme (@In formula).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
-
-match goal with [H : rule |- _] => rename H into r end.
-revert dependent r; case; case => ? ?; case => ? ?.
-intro.
-autorewrite with in_formula'.
-firstorder (subst; try done).
-1-3: gimme @eq; case; intros; subst.
-1-3: (do 3 eexists); firstorder eassumption.
+all: gimme @eq; case; intros; subst.
+all: (do 3 eexists); firstorder eassumption.
 }
 (*use IH*)
 exfalso.
 gimme derivation. move /IH. 
 move /(_ ltac:(omega) ltac:(assumption)).
-move => [? [? [? [? [? [? ?]]]]]]. 
-done.
+firstorder done.
 Qed.
 
 
@@ -71,7 +64,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 1: match goal with [_ : In ?x (seq 0 bound) |- _ ] => rename x into j end.
@@ -93,7 +85,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 }
@@ -117,7 +108,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 
@@ -138,7 +128,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 }
@@ -163,7 +152,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 
@@ -184,7 +172,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 }
@@ -217,7 +204,6 @@ gimme In; gimme In.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 gimme @eq.
@@ -234,7 +220,6 @@ gimme where Γ_all.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 }
@@ -280,7 +265,6 @@ intros until 0 => ?.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula); clear.
-all: try (gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (try done).
 gimme where dollar.
@@ -296,7 +280,6 @@ intros until 0 => ?.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula); clear.
-all: try (gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (try done).
 Qed.
@@ -329,7 +312,6 @@ move : HIn1.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 gimme @eq; case; intro; subst.
@@ -342,7 +324,6 @@ gimme In where Γ_all.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 }
@@ -473,7 +454,6 @@ move : HIn1.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
 all: gimme (@In formula).
-all: try (clear; gimme rule; case; case => ? ?; case => ? ?).
 all: autorewrite with in_formula'.
 all: firstorder (subst; try done).
 gimme @eq; case; intro; subst.
@@ -661,10 +641,8 @@ Lemma get_s_rule_bullet : forall (rs : list rule) (r : rule) (phi psi : formula'
   In (arr phi (arr psi (symbol a))) (s_rule rs r) -> In (atom bullet) phi -> phi = bullet /\ psi = symbol a.
 Proof.
 intros until 0.
-case : r.
-case => ? ?. case => ? ?.
 autorewrite with in_formula'.
-firstorder.
+firstorder; subst.
 all: gimme @eq; case; intros; subst; try done.
 all: gimme In; inversion; try done.
 Qed.
@@ -677,6 +655,7 @@ intros until 0.
 autorewrite with in_formula'.
 firstorder.
 all: gimme @eq; case; intros; subst; try done.
+all: gimme @eq; case; intros; subst; try done.
 all: gimme In; inversion; try done.
 Qed.
 
@@ -687,6 +666,7 @@ Proof.
 intros until 0.
 autorewrite with in_formula'.
 firstorder.
+all: gimme @eq; case; intros; subst; try done.
 all: gimme @eq; case; intros; subst; try done.
 all: gimme In; inversion; try done.
 Qed.

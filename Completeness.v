@@ -141,10 +141,9 @@ apply : elim_arr.
 apply : ax.
 rewrite in_x_rule_eq; eauto.
 rewrite /s_rule.
+autorewrite with list'.
 
-apply in_cons'; right. 
-rewrite to_list_inv.
-constructor; reflexivity.
+firstorder reflexivity.
 
 constructor; last done.
 apply : ax.

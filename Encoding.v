@@ -125,28 +125,23 @@ Lemma lookup_Γ_step : forall (rs : list rule) (x : label) (phi : formula'),
   In (x, phi) (Γ_step rs) <-> (fst x) = (fst (x_rule 0)) /\ (exists (i : nat) (r : rule), In (i, r) (indexed 0 rs) /\ x = x_rule i /\ phi = s_rule rs r).
 Proof.
 intros until 0.
-rewrite /Γ_step.
-rewrite in_map_iff.
+rewrite /Γ_step in_map_iff.
 split.
 move => [[i r] [H ?]].
 case : H. 
-intros; subst; cbn. split; eauto.
-move => [? [i [r [? [? ?]]]]].
-exists (i, r); subst; auto.
+intros; subst; split; eauto.
+firstorder (subst => //).
 Qed.
 
 Lemma lookup_Γ_lr : forall (bound i : nat) (x : label) (phi : formula'), 
   In (x, phi) (Γ_lr bound i) <-> (fst x) = (fst (y_pos 0)) /\ (exists (j : nat), In j (seq 0 bound) /\ x = y_pos j /\ phi = s_pos i j).
 Proof.
 intros until 0.
-rewrite /Γ_lr.
-rewrite in_map_iff.
+rewrite /Γ_lr in_map_iff.
 split.
-move => [j [H ?]].
-case : H. 
-intros; subst; cbn. split; eauto.
-move => [? [j [? [? ?]]]].
-exists j; subst; auto.
+move => [j [H ?]]; case : H. 
+intros; subst; eauto.
+firstorder (subst => //).
 Qed.
 
 
@@ -262,62 +257,43 @@ Qed.
 
 
 
-Lemma in_s_rule_iff : forall (t : formula) (rs : list rule) (a b c d : nat), 
-  In t (s_rule rs ((a,b),(c,d))) <-> 
-    t = arr isl (arr (symbol c) (symbol a)) \/
+Lemma in_s_rule_iff : forall (t : formula) (rs : list rule) (r : rule), 
+  In t (s_rule rs r) <-> 
+    exists (a b c d : nat), r = ((a,b),(c,d)) /\
+    (t = arr isl (arr (symbol c) (symbol a)) \/
     t = arr isr (arr (symbol d) (symbol b)) \/
-    (exists (e : nat), t = arr bullet (arr (symbol e) (symbol e)) /\ e < get_symbol_bound rs).
+    (exists (e : nat), t = arr bullet (arr (symbol e) (symbol e)) /\ e < get_symbol_bound rs)).
 Proof.
 intros until 0.
+move : r => [[? ?][? ?]].
+rewrite /s_rule; autorewrite with list'.
+cbn; rewrite /s_id_rules in_map_iff.
 split.
 {
-rewrite /s_rule.
-
-inversion; first auto.
-gimme In; rewrite to_list_inv; inversion; first auto.
-
-do 2 right.
-gimme In; rewrite /s_id_rules; rewrite in_map_iff.
-move => [e [?]]; subst; move /in_seq.
+intro; do 4 eexists; split; first done.
 firstorder.
+gimme In; rewrite in_seq; firstorder.
 }
 {
-rewrite /s_rule /to_list -/to_list.
-rewrite to_list_inv.
+move => [? [? [? [?]]]].
+case; case; intros; subst.
+firstorder (subst; try done).
 
-case; first (intro; subst; list_element).
-case; first (intro; subst; list_element).
-move => [e [? ?]]; subst.
-do 2 (apply in_cons).
-rewrite /s_id_rules.
-rewrite in_map_iff.
-eexists; split; first reflexivity.
-apply in_seq. omega.
+do 2 right.
+eexists; rewrite in_seq.
+firstorder omega.
 }
 Qed.
 
 
 Lemma in_s_1_iff : forall (t : formula), 
   In t s_1 <-> t = symbol 1.
-Proof.
-intros until 0.
-split.
-
-rewrite /s_1.
-inversion => //.
-
-intro; subst; list_element.
-Qed.
+Proof. intros; split; [by inversion | intro; subst; list_element]. Qed.
 
 
 Lemma in_s_pos_iff : forall (t : formula) (i j : nat), 
   In t (s_pos i j) <-> t = if i =? j then isl else (if i =? 1+j then isr else bullet).
-Proof.
-intros.
-split.
-inversion => //.
-intro; subst; list_element.
-Qed.
+Proof. intros; split; [by inversion | intro; subst; list_element]. Qed.
 
 
 Hint Rewrite in_s_init_iff : in_formula'.
@@ -331,10 +307,11 @@ Hint Rewrite in_s_rule_iff : in_formula'.
 Lemma in_s_rule_bullet : forall (rs : list rule) (r : rule) (a : nat), 
   a < get_symbol_bound rs -> In (arr bullet (arr (symbol a) (symbol a))) (s_rule rs r).
 Proof.
-intro.
-case; case => ? ?; case => ? ?; intros.
+intros.
+case : r; case => ? ?; case => ? ?.
 apply /in_s_rule_iff.
-firstorder.
+do 4 eexists.
+firstorder eauto.
 Qed.
 
 
@@ -359,8 +336,7 @@ Qed.
 
 Lemma well_formed_Γ_all : forall (rs : list rule), well_formed_environment (Γ_init ++ Γ_step rs).
 Proof.
-rewrite /Γ_init.
-cbn.
+intro; cbn.
 (do_last 4 constructor); last apply well_formed_Γ_step.
 all: do ? (match goal with [|- Forall _ (_ :: _)] => constructor; try done end).
 all: rewrite Forall_forall; move => [x phi].
@@ -374,11 +350,10 @@ Lemma rank_environment_bound : forall (rs : list rule) (x : label) (phi : formul
 Proof.
 intros until 0.
 autorewrite with lookup_Γ.
-firstorder; subst; cbn.
-1-4: omega.
+firstorder; subst; cbn; try omega.
 
 clear.
-gimme rule; case; case => ? ?; case => ? ?.
+gimme rule; move => [[? ?] [? ?]].
 rewrite /s_rule.
 move : (get_symbol_bound rs) => m; clear.
 case : m; cbn; first omega.
@@ -387,7 +362,7 @@ move => m; clear.
 move : {1 2 3}(0) => i.
 elim : m i; cbn; first (intros; omega).
 
-move => m IH i.
+move => ? IH i.
 move /(_ (S i)) : IH.
 lia.
 Qed.
