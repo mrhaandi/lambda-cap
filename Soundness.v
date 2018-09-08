@@ -23,6 +23,13 @@ Require Import UserTactics.
 Require Import Derivation.
 Require Import Encoding.
 
+(*simplifies assumptions In (x, phi) (Γ_all rs bound i), In t phi*)
+Ltac inspect_in_Γ := 
+  gimme In where Γ_all; autorewrite with lookup_Γ;
+  (firstorder (subst; try done));
+  gimme (@In formula); autorewrite with in_formula';
+  (firstorder (subst; try done)).
+
 (*only s_rule can be used deriving a type with two parameters for a normal form*)
 Lemma two_params_rule : forall (rs : list rule) (bound n i: nat) (N : term) (phi psi : formula') (s : formula),
   head_form N -> 
@@ -35,45 +42,30 @@ apply (lt_wf_ind n).
 move => {n} n IH; intros until 0. 
 inversion; inversion.
 {
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 all: gimme @eq; case; intros; subst.
 all: (do 3 eexists); firstorder eassumption.
 }
 (*use IH*)
 exfalso.
-gimme derivation. move /IH. 
-move /(_ ltac:(omega) ltac:(assumption)).
+gimme derivation. move /IH.
+move /(_ ltac:(omega)).
 firstorder done.
 Qed.
 
 
-Lemma invert_isl : forall (rs : list rule) (N : term) (bound n i : nat), 
-  normal_form N -> derivation n (Γ_all rs bound i) N isl -> In i (seq 0 bound) /\ N = free_var (y_pos i).
+Lemma invert_pos : forall (rs : list rule) (N : term) (bound n i : nat) (t : formula), 
+  normal_form N -> (t = isl \/ t = isr \/ t = bullet) -> derivation n (Γ_all rs bound i) N t -> 
+  exists (j : nat), In j (seq 0 bound) /\ N = free_var (y_pos j).
 Proof.
-intros until 0; case; last (intros; gimme derivation; inversion).
+intros until 0; case; first last.
+intros; gimme derivation; inversion; firstorder done.
+
 move => {N} N.
 case.
 { (*actual case*)
-move => x; inversion.
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
-1: match goal with [_ : In ?x (seq 0 bound) |- _ ] => rename x into j end.
-2: match goal with [_ : In ?x (seq 0 bound) |- _ ] => rename x into j end.
-
-all: gimme @eq.
-all: have : i = j \/ i = 1 + j \/ (i < j ∨ 1 + j < i) by omega.
-all: case; last case.
-all: intro; do ? inspect_eqb; inversion.
-all: by subst.
+move => ? ?; inversion.
+all: inspect_in_Γ.
 }
 
 intros; gimme derivation; inversion.
@@ -81,106 +73,13 @@ move => {N} N N2.
 case.
 { (*one argument case*)
 intros; exfalso; do 2 (gimme derivation; inversion).
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 }
 intros; do 2 (gimme derivation; inversion).
 intros; exfalso; 
 do 2 (gimme derivation; inversion).
 gimme derivation; move /two_params_rule.
-nip; first auto.
-firstorder done.
-Qed.
-
-Lemma invert_isr : forall (rs : list rule) (N : term) (bound n i : nat), 
-  normal_form N -> derivation n (Γ_all rs bound i) N isr -> exists (j : nat), In j (seq 0 bound) /\ i = 1 + j /\ N = free_var (y_pos j).
-Proof.
-intros until 0; case; last (intros; gimme derivation; inversion).
-move => {N} N.
-case.
-{ (*actual case*)
-move => x; inversion.
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
-
-match goal with [_ : In ?x (seq 0 bound) |- _ ] => rename x into j end.
-
-all: gimme @eq.
-all: have : i = j \/ i = 1 + j \/ (i < j ∨ 1 + j < i) by omega.
-all: case; last case.
-all: intro; do ? inspect_eqb; inversion.
-eauto.
-}
-intros; gimme derivation; inversion.
-move => {N} N N2.
-case.
-{ (*one argument case*)
-intros; exfalso; do 2 (gimme derivation; inversion).
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
-}
-intros; do 2 (gimme derivation; inversion).
-intros; exfalso; 
-do 2 (gimme derivation; inversion).
-gimme derivation; move /two_params_rule.
-nip; first auto.
-firstorder done.
-Qed.
-
-
-Lemma invert_bullet : forall (rs : list rule) (N : term) (bound n i : nat), 
-  normal_form N -> derivation n (Γ_all rs bound i) N bullet -> exists (j : nat), In j (seq 0 bound) /\  (i < j \/ 1+j < i) /\ N = free_var (y_pos j).
-Proof.
-intros until 0; case; last (intros; gimme derivation; inversion).
-move => {N} N.
-case.
-{ (*actual case*)
-move => x; inversion.
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
-
-match goal with [_ : In ?x (seq 0 bound) |- _ ] => rename x into j end.
-
-all: gimme @eq.
-all: have : i = j \/ i = 1 + j \/ (i < j ∨ 1 + j < i) by omega.
-all: case; last case.
-all: intro; do ? inspect_eqb; inversion.
-eauto.
-}
-intros; gimme derivation; inversion.
-move => {N} N N2.
-case.
-{ (*one argument case*)
-intros; exfalso; do 2 (gimme derivation; inversion).
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
-}
-intros; do 2 (gimme derivation; inversion).
-intros; exfalso; 
-do 2 (gimme derivation; inversion).
-gimme derivation; move /two_params_rule.
-nip; first auto.
-firstorder done.
+firstorder (by subst).
 Qed.
 
 (*a symbol is derived only using x_rule or x_1*)
@@ -200,12 +99,7 @@ case.
 move => {N} x.
 inversion.
 right.
-gimme In; gimme In.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 gimme @eq.
 match goal with [|- context[if ?P then _ else _]] => case : P; inversion end.
 }
@@ -216,44 +110,24 @@ case.
 { (*x N1 not possible*)
 intros; exfalso.
 do 2 (gimme derivation; inversion).
-gimme where Γ_all.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 }
 { (*head is bound*)
 intros; do 2 (gimme derivation; inversion).
 }
 { (*actual case M N1 N2*)
-
 move => {N} N N1.
 intros.
-left. 
+left.
 do 2 (gimme derivation; inversion).
 gimme derivation. move /two_params_rule.
 nip; auto.
-move => [i [r [e' [? [? [? ?]]]]]].
-have : exists j, In j (seq 0 bound) /\ N1 = free_var (y_pos j).
-{
-gimme or.
-case; last case.
-all: intro; subst; gimme Forall; inversion.
-all: gimme derivation.
-1: move /invert_isl.
-2: move /invert_isr.
-3: move /invert_bullet.
-all: nip; first auto.
-eauto.
-1-2: move => [? [? [? ?]]]; eauto.
-}
 
-move => [j [? ?]].
-subst.
-
-do 4 eexists.
-eauto.
+firstorder subst.
+all: gimme Forall; inversion.
+all: gimme derivation; move /invert_pos.
+all: firstorder (subst).
+all: do 4 eexists; eauto.
 }
 Qed.
 
@@ -261,12 +135,8 @@ Qed.
 Lemma dollar_not_in_Γ_all : forall (rs : list rule) (x : label) (phi : formula') (bound : nat),
   @In formula dollar phi -> In (x, phi) (Γ_all rs bound (1 + bound)) -> False.
 Proof.
-intros until 0 => ?.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula); clear.
-all: autorewrite with in_formula'.
-all: firstorder (try done).
+intros.
+inspect_in_Γ.
 gimme where dollar.
 match goal with [|- context[if ?P then _ else _]] => case : P; first inversion end.
 match goal with [|- context[if ?P then _ else _]] => case : P; inversion end.
@@ -276,12 +146,8 @@ Qed.
 Lemma triangle_not_in_Γ_all : forall (rs : list rule) (x : label) (phi : formula') (bound : nat),
   @In formula triangle phi -> In (x, phi) (Γ_all rs 0 0) -> False.
 Proof.
-intros until 0 => ?.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula); clear.
-all: autorewrite with in_formula'.
-all: firstorder (try done).
+intros.
+inspect_in_Γ.
 Qed.
 
 (*dollar is derived only by x_0 and x_star*)
@@ -307,25 +173,14 @@ case.
 {
 move => x HN'; inversion.
 gimme derivation; inversion.
-gimme In; gimme In; move => HIn1 HIn2.
-move : HIn1.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 gimme @eq; case; intro; subst.
 right.
 do 2 (gimme Forall; inversion).
 gimme derivation; inversion; eauto; exfalso.
 
 {
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 }
 
 {
@@ -414,9 +269,8 @@ move /(_ Γ H) : HDs.
 gimme In; rewrite in_map_iff.
 move => [i [? ?]]; subst.
 inversion; gimme derivation; inversion.
-gimme In; gimme In; autorewrite with in_x_Γ; move => ->.
-(do_last 3 case); try done.
-case; intro; subst.
+inspect_in_Γ.
+gimme @eq; case; intro; subst.
 gimme Forall; by inversion.
 Qed.
 
@@ -449,13 +303,7 @@ case.
 (*actual case*)
 move => x HN'; inversion.
 gimme derivation; inversion.
-gimme In; gimme In; move => HIn1 HIn2.
-move : HIn1.
-autorewrite with lookup_Γ.
-firstorder (subst; try done).
-all: gimme (@In formula).
-all: autorewrite with in_formula'.
-all: firstorder (subst; try done).
+inspect_in_Γ.
 gimme @eq; case; intro; subst.
 do 2 (gimme Forall; inversion).
 eauto.
@@ -575,64 +423,36 @@ Qed.
 
 Lemma invert_derivation_y_pos_lt : forall rs n bound i j s, derivation n (Γ_all rs bound i) (free_var (y_pos j)) s -> i < j -> s = bullet.
 Proof.
-intros until 0.
-inversion => ?.
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-rewrite /y_pos.
-firstorder (subst; try done).
-gimme (@eq label).
-case; intro; subst.
-gimme (@In formula).
-case => //.
+intros; gimme derivation; inversion.
+inspect_in_Γ.
+gimme (@eq label); case; intro; subst.
 by (do ? inspect_eqb).
 Qed.
 
 
 Lemma invert_derivation_y_pos_gt : forall rs n bound i j s, derivation n (Γ_all rs bound i) (free_var (y_pos j)) s -> i > 1 + j -> s = bullet.
 Proof.
-intros until 0.
-inversion => ?.
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-rewrite /y_pos.
-firstorder (subst; try done).
-gimme (@eq label).
-case; intro; subst.
-gimme (@In formula).
-case => //.
+intros; gimme derivation; inversion.
+inspect_in_Γ.
+gimme (@eq label); case; intro; subst.
 by (do ? inspect_eqb).
 Qed.
 
 
 Lemma invert_derivation_y_pos_isl : forall rs n bound j s, derivation n (Γ_all rs bound j) (free_var (y_pos j)) s -> s = isl.
 Proof.
-intros until 0.
-inversion.
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-rewrite /y_pos.
-firstorder (subst; try done).
-gimme (@eq label).
-case; intro; subst.
-gimme (@In formula).
-case => //.
+intros; gimme derivation; inversion.
+inspect_in_Γ.
+gimme (@eq label); case; intro; subst.
 by (do ? inspect_eqb).
 Qed.
 
 
 Lemma invert_derivation_y_pos_isr : forall rs n bound j s, derivation n (Γ_all rs bound (S j)) (free_var (y_pos j)) s -> s = isr.
 Proof.
-intros until 0.
-inversion.
-gimme In where Γ_all.
-autorewrite with lookup_Γ.
-rewrite /y_pos.
-firstorder (subst; try done).
-gimme (@eq label).
-case; intro; subst.
-gimme (@In formula).
-case => //.
+intros; gimme derivation; inversion.
+inspect_in_Γ.
+gimme (@eq label); case; intro; subst.
 by (do ? inspect_eqb).
 Qed.
 
