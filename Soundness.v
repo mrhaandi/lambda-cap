@@ -38,8 +38,8 @@ Lemma two_params_rule : forall (rs : list rule) (bound n i: nat) (N : term) (phi
     (phi = isl \/ phi = isr \/ phi = bullet) /\ s = symbol e).
 Proof.
 move => rs bound n i.
-apply (lt_wf_ind n).
-move => {n} n IH; intros until 0. 
+elim /lt_wf_ind : n.
+move => n IH; intros until 0. 
 inversion; inversion.
 {
 inspect_in_Γ.
@@ -328,9 +328,8 @@ Lemma soundness_expand : forall (rs : list rule) (n bound : nat) (N : term),
   normal_form N' /\
   Forall (fun Γi => derivation n' Γi N' (symbol 0)) (map (Γ_all rs bound') (seq 0 (1+bound'))).
 Proof.
-move => rs n.
-apply (lt_wf_ind n).
-move => {n} n IH bound N HN HDs HDN1 HDN2.
+move => rs. elim /lt_wf_ind.
+move => n IH bound N HN HDs HDN1 HDN2.
 move /term_shape_dollar : (HDN2). nip; auto.
 case.
 { (*x_0 is used*)
@@ -498,9 +497,8 @@ Lemma soundness_step : forall (rs : list rule) (n bound : nat) (N : term) (v : l
   Forall (fun '(i, a) => derivation n (Γ_all rs bound i) N (symbol a)) (indexed 0 v) ->
   rewrites_to rs v (map (fun _ => 1) v).
 Proof.
-move => rs n.
-apply (lt_wf_ind n).
-move => {n} n IH bound N v HN Hv HDs.
+move => rs. elim /lt_wf_ind.
+move => n IH bound N v HN Hv HDs.
 
 have : exists (e : nat), derivation n (Γ_all rs bound 0) N (symbol e).
 revert dependent v.
