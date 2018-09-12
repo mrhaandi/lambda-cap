@@ -10,6 +10,7 @@ Set Maximal Implicit Insertion.
 Require Import List.
 Import ListNotations.
 
+Require Import Omega.
 Require Import UserTactics.
 
 
@@ -123,4 +124,20 @@ Proof.
 auto.
 Qed.
 
+Lemma Forall_exists_monotone : forall (A : Type) (P : nat -> A -> Prop) (l : list A), 
+  (forall (n m : nat) (a : A), P n a -> n <= m -> P m a) -> Forall (fun (a : A) => exists (n : nat), P n a) l ->
+  exists (n : nat), Forall (P n) l.
+Proof.
+move => A P l H. elim : l.
 
+intros; exists 0; auto.
+
+move => a l IH; inversion.
+gimme Forall. move /IH.
+gimme where P; move => [n1 ?].
+move => [n2 ?].
+exists (n1+n2); constructor.
+apply : H; [eassumption | omega].
+apply : Forall_impl; last eassumption.
+intros; apply : H; [eassumption | omega].
+Qed.

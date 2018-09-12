@@ -30,15 +30,13 @@ Proof.
 intro; split.
 
 move => [m]. move /completeness => [n [M [?]]].
-move /strict_cd_derivation_completeness.
-move /(_ (well_formed_Γ_all rs)).
 move /cd_derivation_completeness.
+move /(_ (well_formed_Γ_all rs)).
 eauto.
 
 move => [N [?]].
-move /cd_derivation_soundness.
-move /strict_cd_derivation_soundness.
-move => [n]. move /soundness.
+move /cd_derivation_soundness => [n]. 
+move /soundness.
 eauto.
 Qed.
 
