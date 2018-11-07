@@ -8,7 +8,7 @@
 ./Formula.v
 ./Term.v
 ./Derivation.v
-./CD_Derivation.v
+./StrictDerivation.v
 ./Encoding.v
 ./Soundness.v
 ./Completeness.v
