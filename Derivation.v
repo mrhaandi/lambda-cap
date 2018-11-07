@@ -30,7 +30,7 @@ Inductive derivation : nat -> environment -> term -> formula -> Prop :=
   | intro_arr : forall (n : nat) (Γ: environment) (M : term) (phi : formula') (t : formula), 
     (forall (x : label), derivation n ((x, phi) :: Γ) (instantiate x 0 M) t) -> derivation (S n) Γ (term_abs M) (arr phi t)
   | elim_arr : forall (n : nat) (Γ: environment) (M N : term) (phi : formula') (t : formula), 
-    derivation n Γ M (arr phi t) -> Forall (derivation n Γ N) phi -> derivation (S n) Γ (term_app M N) t.
+    derivation n Γ M (arr phi t) -> Forall (derivation n Γ N) phi -> lc 0 N -> derivation (S n) Γ (term_app M N) t.
 
 (*
 Conjecture normalization : forall (m : nat) (Γ: environment) (M :term) (t: formula), 
@@ -43,13 +43,13 @@ Theorem weakening : forall (n : nat) (Γ Γ': environment) (M: term) (t: formula
 Proof.
 elim.
 (*base case*)
-intros until 0.
+intros *.
 inversion.
 move /(_ _ ltac:(eassumption)).
 eauto using derivation.
 
 move => n IH.
-intros until 0; inversion.
+intros *; inversion.
 move /(_ _ ltac:(eassumption)).
 eauto using derivation.
 move => H_in.
@@ -205,6 +205,8 @@ apply : elim_arr; try eassumption.
 gimme Forall.
 rewrite ? Forall_forall => ? ? ?.
 apply : IH; try omega + eauto.
+
+apply : Lc.instantiate_rename. eassumption.
 }
 Qed.
 
@@ -214,7 +216,7 @@ Proof.
 move => n.
 apply (lt_wf_ind n).
 move => {n} n IH.
-intros until 0; inversion.
+intros *; inversion.
 
 auto using lc.
 
@@ -223,8 +225,6 @@ gimme where instantiate; move /(_ (0,0)).
 move /IH.
 nip; first omega.
 move /Lc.instantiate_iff. apply.
-
-gimme Forall; move /forall_exists_in_formula' => [? [? ?]].
 constructor; eauto.
 Qed.
 
@@ -266,4 +266,5 @@ apply : elim_arr.
 apply: IH; try eassumption; omega.
 apply : Forall_impl; last eassumption.
 intros; apply : IH; try eassumption; omega.
+done.
 Qed.

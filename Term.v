@@ -117,6 +117,32 @@ by inspect_eqb.
 
 all: intros; gimme lc; inversion; f_equal; eauto.
 Qed.
+
+Lemma bind_succ : forall (x : label) (M : term) (n : nat), lc n M -> lc (S n) (bind x n M).
+Proof.
+move => x.
+elim; cbn.
+
+move => y n.
+case : (Label.eqb x y); intro; constructor. omega.
+
+move => i j; inversion.
+constructor. omega.
+
+all: intros; gimme lc; inversion; constructor; eauto.
+Qed.
+
+Lemma instantiate_rename : forall (x y : label) (M : term) (n m : nat), lc n (instantiate x m M) -> lc n (instantiate y m M).
+Proof.
+move => x y.
+elim; cbn => //.
+
+move => n n' m.
+case : (n =? m) => //. intro; constructor.
+
+all: intros; gimme lc; inversion; constructor; eauto.
+Qed.
+
 End Lc.
 
 
@@ -127,7 +153,7 @@ move => N x n.
 suff : (normal_form N -> normal_form (instantiate x n N)) /\ 
   (head_form N -> head_form (instantiate x n N)); first intuition.
 elim : N n.
-intros until 0; cbn; auto.
+intros *; cbn; auto.
 move => n n'; cbn; case : (n =? n'); auto using normal_form, head_form.
 (*case app*)
 move => N IH1 M IH2 n; cbn.
@@ -248,7 +274,7 @@ Qed.
 
 Lemma bind_depth : forall (n m : nat) (x : label) (M : term), term_depth n (bind x m M) -> term_depth n M.
 Proof.
-intros until 0.
+intros *.
 elim : M n m; cbn.
 
 1-2: intros; constructor.

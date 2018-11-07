@@ -46,7 +46,7 @@ Lemma split_word : forall (v : list nat) (i : nat),
   1 + i < length v -> 
   exists (v1 v2 : list nat) (a b : nat), v = v1 ++ (a :: b :: v2) /\ length v1 = i.
 Proof.
-intros until 0 => Hv.
+intros * => Hv.
 have := nth_split v.
 move /(_ i 0 ltac:(omega)).
 move : (nth i v 0) => a.

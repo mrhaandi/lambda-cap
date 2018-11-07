@@ -30,7 +30,7 @@ Qed.
 Lemma Forall_app (T : Type) (P : T -> Prop) : forall (A B : list T), Forall P (A ++ B) <-> Forall P A /\ Forall P B.
 Proof.
 elim; first by firstorder done.
-intros until 0 => IH.
+intros * => IH.
 intros.
 constructor.
 inversion.
@@ -65,10 +65,10 @@ Lemma Forall_flat_map (T U: Type) (P : T -> Prop) : forall (ds : list U)
 In d ds -> Forall P (f d).
 Proof.
 elim; first done.
-intros until 0 => IH.
+intros * => IH.
 cbn.
-intros until 0 => H.
-intros until 0.
+intros * => H.
+intros *.
 move /Forall_app => [? ?].
 case; [by intros; subst | auto].
 Qed.

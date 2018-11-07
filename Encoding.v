@@ -24,7 +24,8 @@ Require Import UserTactics.
 
 Require Export SSTS.
 Require Import Derivation.
-Require Import CD_Derivation.
+
+Require Import StrictDerivation.
 
 (*rewrite In (x, phi) (Γ_all rs bound i) to a firstorder formula*)
 Create HintDb lookup_Γ.
@@ -49,28 +50,26 @@ Definition symbol (x : nat) : label := (1, x).
 Definition isl : label := (2,0).
 Definition isr : label := (2,1).
 
-Definition s_init : formula' := arr (cons' (atom hash) dollar) triangle.
+Definition s_init : formula' := arr [atom hash; atom dollar] triangle.
 
 Definition s_star : formula' := 
-  cons' (arr (arr bullet star) star) 
-  (cons' (arr (arr isl star) hash) (arr (cons' (arr isr hash) (arr bullet dollar)) dollar)).
+  [arr [arr [atom bullet] star] star; arr [arr [atom isl] star] hash; arr [arr [atom isr] hash; arr [atom bullet] dollar] dollar].
 
 Definition s_0 : formula' := 
-  cons' (arr (symbol 0) star) 
-  (cons' (arr (symbol 0) hash) (arr (symbol 1) dollar)).
+  [arr [atom (symbol 0)] star; arr [atom (symbol 0)] hash; arr [atom (symbol 1)] dollar].
 
 
-Definition s_1 : formula' := symbol 1.
+Definition s_1 : formula' := [atom (symbol 1)].
 
 
 Definition s_id_rules (symbol_bound : nat) : list formula := 
-  map (fun (a : nat) => (arr bullet (arr (symbol a) (symbol a)))) (seq 0 symbol_bound).
+  map (fun (a : nat) => (arr [atom bullet] (arr [atom (symbol a)] (symbol a)))) (seq 0 symbol_bound).
 
 
 Definition s_rule (rs : list rule) (r : rule) : formula' := 
   match r with
-  | ((x,y),(x',y')) => cons' (arr isl (arr (symbol x') (symbol x))) 
-      (to_list' (arr isr (arr (symbol y') (symbol y))) (s_id_rules (get_symbol_bound rs)))
+  | ((x,y),(x',y')) => cons (arr [atom isl] (arr [atom (symbol x')] (symbol x))) 
+      (cons (arr [atom isr] (arr [atom (symbol y')] (symbol y))) (s_id_rules (get_symbol_bound rs)))
   end.
 
 
@@ -114,7 +113,7 @@ Proof. reflexivity. Qed.
 Lemma lookup_Γ_init : forall (x : label) (phi : formula'), 
   In (x, phi) Γ_init <-> (x = x_init /\ phi = s_init) \/ (x = x_star /\ phi = s_star) \/ (x = x_0 /\ phi = s_0) \/ (x = x_1 /\ phi = s_1).
 Proof.
-intros until 0.
+intros *.
 split.
 (do_last 4 case); case; firstorder auto.
 firstorder (subst; list_element).
@@ -124,7 +123,7 @@ Qed.
 Lemma lookup_Γ_step : forall (rs : list rule) (x : label) (phi : formula'), 
   In (x, phi) (Γ_step rs) <-> (fst x) = (fst (x_rule 0)) /\ (exists (i : nat) (r : rule), In (i, r) (indexed 0 rs) /\ x = x_rule i /\ phi = s_rule rs r).
 Proof.
-intros until 0.
+intros *.
 rewrite /Γ_step in_map_iff.
 split.
 move => [[i r] [H ?]].
@@ -136,7 +135,7 @@ Qed.
 Lemma lookup_Γ_lr : forall (bound i : nat) (x : label) (phi : formula'), 
   In (x, phi) (Γ_lr bound i) <-> (fst x) = (fst (y_pos 0)) /\ (exists (j : nat), In j (seq 0 bound) /\ x = y_pos j /\ phi = s_pos i j).
 Proof.
-intros until 0.
+intros *.
 rewrite /Γ_lr in_map_iff.
 split.
 move => [j [H ?]]; case : H. 
@@ -212,9 +211,9 @@ Hint Rewrite in_y_pos_eq : in_x_Γ.
 
 Lemma in_s_init_iff : forall (t : formula), 
   In t s_init <-> 
-    t = arr (cons' (atom hash) dollar) triangle.
+    t = arr [atom hash; atom dollar] triangle.
 Proof.
-intros until 0.
+intros *.
 split; first by inversion.
 
 intro; subst; list_element.
@@ -222,11 +221,11 @@ Qed.
 
 Lemma in_s_star_iff : forall (t : formula), 
   In t s_star <-> 
-    t = arr (arr bullet star) star \/
-    t = arr (arr isl star) hash \/
-    t = arr (cons' (arr isr hash) (arr bullet dollar)) dollar.
+    t = arr [arr [atom bullet] star] star \/
+    t = arr [arr [atom isl] star] hash \/
+    t = arr [arr [atom isr] hash; arr [atom bullet] dollar] dollar.
 Proof.
-intros until 0.
+intros *.
 split.
 
 rewrite /s_star.
@@ -240,11 +239,11 @@ Qed.
 
 Lemma in_s_0_iff : forall (t : formula), 
   In t s_0 <-> 
-    t = arr (symbol 0) star \/
-    t = arr (symbol 0) hash \/ 
-    t = arr (symbol 1) dollar.
+    t = arr [atom (symbol 0)] star \/
+    t = arr [atom (symbol 0)] hash \/ 
+    t = arr [atom (symbol 1)] dollar.
 Proof.
-intros until 0.
+intros *.
 split.
 
 rewrite /s_0.
@@ -260,13 +259,13 @@ Qed.
 Lemma in_s_rule_iff : forall (t : formula) (rs : list rule) (r : rule), 
   In t (s_rule rs r) <-> 
     exists (a b c d : nat), r = ((a,b),(c,d)) /\
-    (t = arr isl (arr (symbol c) (symbol a)) \/
-    t = arr isr (arr (symbol d) (symbol b)) \/
-    (exists (e : nat), t = arr bullet (arr (symbol e) (symbol e)) /\ e < get_symbol_bound rs)).
+    (t = arr [atom isl] (arr [atom (symbol c)] (symbol a)) \/
+    t = arr [atom isr] (arr [atom (symbol d)] (symbol b)) \/
+    (exists (e : nat), t = arr [atom bullet] (arr [atom (symbol e)] (symbol e)) /\ e < get_symbol_bound rs)).
 Proof.
-intros until 0.
+intros *.
 move : r => [[? ?][? ?]].
-rewrite /s_rule; autorewrite with list'.
+rewrite /s_rule.
 cbn; rewrite /s_id_rules in_map_iff.
 split.
 {
@@ -305,7 +304,7 @@ Hint Rewrite in_s_rule_iff : in_formula'.
 
 
 Lemma in_s_rule_bullet : forall (rs : list rule) (r : rule) (a : nat), 
-  a < get_symbol_bound rs -> In (arr bullet (arr (symbol a) (symbol a))) (s_rule rs r).
+  a < get_symbol_bound rs -> In (arr [atom bullet] (arr [atom (symbol a)] (symbol a))) (s_rule rs r).
 Proof.
 intros.
 case : r; case => ? ?; case => ? ?.
@@ -345,24 +344,32 @@ all: firstorder (subst; try done).
 Qed.
 
 
+Lemma max_le_iff : forall n m l, Nat.max n m <= l <-> n <= l /\ m <= l.
+Proof.
+intros. lia.
+Qed.
+
 Lemma rank_environment_bound : forall (rs : list rule) (x : label) (phi : formula'), 
   In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' phi <= 2.
 Proof.
-intros until 0.
+intros *.
 autorewrite with lookup_Γ.
-firstorder; subst; cbn; try omega.
+firstorder (subst; try done); cbn; try omega.
 
 clear.
 gimme rule; move => [[? ?] [? ?]].
 rewrite /s_rule.
 move : (get_symbol_bound rs) => m; clear.
-case : m; cbn; first omega.
 
-move => m; clear.
-move : {1 2 3}(0) => i.
-elim : m i; cbn; first (intros; omega).
+cbn.
+rewrite max_le_iff. split; last omega.
+rewrite /s_id_rules.
 
+move : {1 3}(0) => i.
+
+elim : m i; cbn; first (intros; lia).
 move => ? IH i.
+rewrite max_le_iff. split; last omega.
 move /(_ (S i)) : IH.
-lia.
+done.
 Qed.

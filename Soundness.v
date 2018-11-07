@@ -39,7 +39,7 @@ Lemma two_params_rule : forall (rs : list rule) (bound n i: nat) (N : term) (phi
 Proof.
 move => rs bound n i.
 elim /lt_wf_ind : n.
-move => n IH; intros until 0. 
+move => n IH; intros *. 
 inversion; inversion.
 {
 inspect_in_Γ.
@@ -58,7 +58,7 @@ Lemma invert_pos : forall (rs : list rule) (N : term) (bound n i : nat) (t : for
   normal_form N -> (t = isl \/ t = isr \/ t = bullet) -> derivation n (Γ_all rs bound i) N t -> 
   exists (j : nat), In j (seq 0 bound) /\ N = free_var (y_pos j).
 Proof.
-intros until 0; case; first last.
+intros *; case; first last.
 intros; gimme derivation; inversion; firstorder done.
 
 move => {N} N.
@@ -91,7 +91,7 @@ Lemma term_1 : forall (rs : list rule) (n bound e : nat) (N : term),
     N = term_app (term_app (free_var (x_rule i)) (free_var (y_pos j))) M)
   \/ (N = free_var x_1).
 Proof.
-intros until 0.
+intros *.
 case; last (intros; gimme derivation; inversion).
 move => {N} N.
 case.
@@ -103,7 +103,7 @@ inspect_in_Γ.
 gimme @eq.
 match goal with [|- context[if ?P then _ else _]] => case : P; inversion end.
 }
-intros until 0; by inversion.
+intros *; by inversion.
 
 move => {N} N N2.
 case.
@@ -157,7 +157,7 @@ Lemma term_shape_dollar : forall (rs : list rule) (n bound : nat) (N : term),
     (exists (N' : term), normal_form N' /\ N = term_app (free_var x_0) N') \/
     (exists (N' : term), normal_form (term_abs N') /\ N = term_app (free_var x_star) (term_abs N')).
 Proof.
-intros until 0.
+intros *.
 case; last (move => ? ?; inversion). (*N is not an abstraction*)
 move => {N} N.
 case.
@@ -167,7 +167,7 @@ exfalso.
 apply : dollar_not_in_Γ_all; eauto.
 }
 (*head cannot be bound*)
-intros until 0; inversion.
+intros *; inversion.
 move => {N} N N'.
 case.
 {
@@ -262,7 +262,7 @@ Lemma invert_forall_x_0 : forall (rs : list rule) (n bound: nat) (N : term),
   -> Forall (fun (Γi : environment) => derivation (Nat.pred n) Γi N (symbol 0)) 
     (map (Γ_all rs bound) (seq 0 bound)).
 Proof.
-intros until 0.
+intros *.
 rewrite ? Forall_forall.
 move => HDs Γ H.
 move /(_ Γ H) : HDs.
@@ -282,7 +282,7 @@ Lemma soundness_init : forall (rs : list rule) (n : nat) (N : term),
   derivation n' (Γ_all rs 0 0) N' hash /\
   derivation n' (Γ_all rs 0 0) N' dollar.
 Proof.
-intros until 0.
+intros *.
 
 have : (Γ_init ++ Γ_step rs) = Γ_all rs 0 0 by reflexivity.
 move => ->.
@@ -296,7 +296,7 @@ exfalso.
 apply : triangle_not_in_Γ_all; eauto.
 }
 (*head cannot be bound*)
-intros until 0; inversion.
+intros *; inversion.
 move => {N} N N'.
 case.
 {
@@ -459,7 +459,7 @@ Qed.
 Lemma get_s_rule_bullet : forall (rs : list rule) (r : rule) (phi psi : formula') (a : nat), 
   In (arr phi (arr psi (symbol a))) (s_rule rs r) -> In (atom bullet) phi -> phi = bullet /\ psi = symbol a.
 Proof.
-intros until 0.
+intros *.
 autorewrite with in_formula'.
 firstorder; subst.
 all: gimme @eq; case; intros; subst; try done.
@@ -470,7 +470,7 @@ Qed.
 Lemma get_s_rule_isl : forall (rs : list rule) (a' a b c d : nat) (phi psi : formula'), 
   In (arr phi (arr psi (symbol a'))) (s_rule rs ((a,b),(c,d))) -> In (atom isl) phi -> phi = isl /\ psi = symbol c /\ a' = a.
 Proof.
-intros until 0.
+intros *.
 autorewrite with in_formula'.
 firstorder.
 all: gimme @eq; case; intros; subst; try done.
@@ -482,13 +482,26 @@ Qed.
 Lemma get_s_rule_isr : forall (rs : list rule) (a' a b c d : nat) (phi psi : formula'), 
   In (arr phi (arr psi (symbol a'))) (s_rule rs ((a,b),(c,d))) -> In (atom isr) phi -> phi = isr /\ psi = symbol d /\ a' = b.
 Proof.
-intros until 0.
+intros *.
 autorewrite with in_formula'.
 firstorder.
 all: gimme @eq; case; intros; subst; try done.
 all: gimme @eq; case; intros; subst; try done.
 all: gimme In; inversion; try done.
 Qed.
+
+
+Lemma x_rule_nonempty_source : forall i j bound rs phi psi t, In (x_rule i, phi) (Γ_all rs bound j) -> In (arr psi t) phi -> psi <> [].
+Proof.
+intros. intro. subst.
+gimme where Γ_all.
+autorewrite with in_x_Γ.
+firstorder (subst; auto).
+gimme (@In formula).
+autorewrite with in_formula'.
+firstorder (subst; try done).
+Qed.
+
 
 (*if [a_0 .. a_bound] is inhabited in (Γ_all rs bound [0 .. bound], then a_0..a_bound rewrites to 1..1 *)
 Lemma soundness_step : forall (rs : list rule) (n bound : nat) (N : term) (v : list nat),
@@ -529,11 +542,16 @@ do ? (gimme derivation where free_var; inversion).
 
 (*show that arguments at j, 1+j positions are isl and isr*)
 gimme Forall where (y_pos j). 
-move /forall_exists_in_formula' => [sl [?]].
+move /forall_exists_in_formula'. nip. 
+apply : x_rule_nonempty_source; first last; eassumption.
+move => [sl [?]].
 move /invert_derivation_y_pos_isl.
 intro; subst sl.
+
 gimme Forall where (y_pos j).
-move /forall_exists_in_formula' => [sr [?]].
+move /forall_exists_in_formula'. nip. 
+apply : x_rule_nonempty_source; first last; eassumption.
+move => [sr [?]].
 move /invert_derivation_y_pos_isr.
 intro; subst sr.
 
@@ -555,13 +573,13 @@ move => [a' [b' [c' [d' ?]]]]; subst r.
 (*show isl rewrites a' to c'*)
 gimme In where a.
 move /get_s_rule_isl.
-nip; first auto.
+nip. done.
 move => [? [? ?]]; subst.
 
 (*show isr rewrites b' to d'*)
 gimme In where b.
 move /get_s_rule_isr.
-nip; first auto.
+nip. done.
 move => [? [? ?]]; subst.
 
 gimme In where rs; move /in_indexed_in.
@@ -589,12 +607,15 @@ rewrite ? Forall_forall.
 move => HDs [i a] Hia.
 move /(_ (i, a) Hia) : HDs; inversion.
 do 2 (gimme derivation; inversion).
+gimme Forall where y_pos.
+move /forall_exists_in_formula'. nip. 
+apply : x_rule_nonempty_source; first last; eassumption.
+move => [s [?]].
 gimme In where x_rule.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
-gimme Forall where y_pos.
-move /forall_exists_in_formula' => [s [?]].
 
+gimme derivation where y_pos.
 move /invert_derivation_y_pos_lt.
 nip. gimme (In (i, a)). move /in_indexed_bounds; intros; omega.
 intro; subst.
@@ -619,12 +640,17 @@ rewrite ? Forall_forall.
 move => HDs [i a] Hia.
 move /(_ (i, a) Hia) : HDs; inversion.
 do 2 (gimme derivation; inversion).
+
+gimme Forall where y_pos.
+move /forall_exists_in_formula'. nip. 
+apply : x_rule_nonempty_source; first last; eassumption.
+move => [s [?]].
+
 gimme In where x_rule.
 autorewrite with lookup_Γ.
 firstorder (subst; try done).
-gimme Forall where y_pos.
-move /forall_exists_in_formula' => [s [?]].
 
+gimme derivation where y_pos.
 move /invert_derivation_y_pos_gt.
 nip. gimme (In (i, a)). move /in_indexed_bounds; intros; omega.
 intro; subst.
