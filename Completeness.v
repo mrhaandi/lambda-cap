@@ -29,7 +29,6 @@ Lemma completeness_step : forall (rs : list rule) (bound : nat)  (v : list nat),
   rewrites_to rs v (map (fun _ => 1) v) ->
   length v = 1 + bound ->
   exists (n : nat) (N : term),
-  lc 0 N /\
   normal_form N /\
   Forall (fun '(i, a) => derivation (1+n) (Γ_all rs bound i) N (symbol a)) (indexed 0 v) /\
   derivation (1+n) (Γ_all rs bound (1 + bound)) N (symbol 1).
@@ -41,8 +40,7 @@ elim : Hvw Hw Hv.
 {
 clear; move => w; intros.
 exists 0, (free_var x_1).
-do_last 3 split.
-by constructor.
+do_last 2 split.
 do 2 constructor.
 
 rewrite Forall_forall.
@@ -73,15 +71,14 @@ constructor. omega.
 auto.
 
 nip; first (gimme where length; move => <-; rewrite ? app_length; by cbn).
-move => [n [N [? [? [? ?]]]]].
+move => [n [N [? [? ?]]]].
 gimme In; move /in_in_indexed. move/(_ 0) => [i ?].
 exists (S n), (term_app (term_app (free_var (x_rule i)) (free_var (y_pos (length v1)))) N).
 
 have ? : length v1 < bound.
 gimme where length; rewrite app_length; cbn; intros; omega.
 
-do_last 3 split.
-do ? (assumption + constructor).
+do_last 2 split.
 
 do ? (assumption + constructor).
 {
@@ -99,8 +96,8 @@ have ? : In (arr [atom bullet] (arr [atom (symbol a')] (symbol a'))) (s_rule rs 
 apply : in_s_rule_bullet.
 gimme In; move /in_indexed_in => ?.
 gimme Forall where get_symbol_bound.
-move /Forall_app => [? _].
-gimme Forall where v1.
+rewrite Forall_app.
+move => [H' _]. move : H'.
 rewrite Forall_forall.
 move /(_ _ ltac:(eassumption)). apply.
 
@@ -113,12 +110,12 @@ apply : ax.
 rewrite in_y_pos_eq in_seq.
 split; [omega | reflexivity].
 by constructor; by do ? inspect_eqb.
-by constructor.
 
+constructor.
 constructor; last constructor.
 gimme Forall where (indexed 0 v1).
 move /Forall_forall; move /(_ _ ltac:(eassumption)); apply.
-done.
+apply : derivation_lc. eassumption.
 }
 rewrite /indexed -/indexed.
 do 2 (gimme Forall where v2; inversion).
@@ -136,9 +133,9 @@ apply : ax.
 rewrite in_y_pos_eq in_seq.
 split; [omega | reflexivity].
 constructor; by inspect_eqb.
+constructor.
 by constructor.
-by constructor.
-done.
+apply : derivation_lc. eassumption.
 }
 
 { (*isr case*)
@@ -155,10 +152,9 @@ apply : ax.
 rewrite in_y_pos_eq in_seq.
 split; [omega | reflexivity].
 by constructor; by do ? inspect_eqb.
-
+constructor.
 by constructor.
-by constructor.
-done.
+apply : derivation_lc. eassumption.
 }
 
 { (*v2 case*)
@@ -187,11 +183,11 @@ rewrite in_y_pos_eq in_seq.
 split; [omega | reflexivity].
 by constructor; by do ? inspect_eqb.
 
-by constructor.
+constructor.
 constructor; last done.
 gimme Forall.
 move /Forall_forall; move /(_ _ ltac:(eassumption)); apply.
-done.
+apply : derivation_lc. eassumption.
 }
 }
 
@@ -209,9 +205,10 @@ rewrite in_seq.
 intuition omega.
 
 constructor. by do ? inspect_eqb.
-by constructor.
+
+constructor.
 constructor => //.
-done.
+apply : derivation_lc. eassumption.
 }
 Qed.
 
@@ -220,7 +217,6 @@ Lemma completeness_star : forall (rs : list rule) (N : term) (n bound : nat), no
   Forall (fun '(i, a) => derivation n (Γ_all rs bound i) N (symbol a)) (indexed 0 (repeat 0 (S bound))) ->
   derivation n (Γ_all rs bound (1+bound)) N (symbol 1) -> 
   exists (n' : nat) (N' : term), 
-  lc 0 N' /\
   normal_form N' /\
   Forall (fun i => derivation n' (Γ_all rs bound i) N' star) (seq 0 bound) /\
   derivation n' (Γ_all rs bound bound) N' hash /\
@@ -228,9 +224,8 @@ Lemma completeness_star : forall (rs : list rule) (N : term) (n bound : nat), no
 Proof.
 intros.
 exists (S n), (term_app (free_var x_0) N).
-do_last 4 split.
+do_last 3 split.
 
-do_first 2 constructor. apply : derivation_lc. by eassumption.
 do 2 constructor; auto; constructor.
 
 gimme Forall; rewrite ? Forall_forall.
@@ -254,7 +249,7 @@ by rewrite in_x_0_eq.
 by constructor.
 
 by constructor.
-apply : derivation_lc. by eassumption.
+apply : derivation_lc. eassumption.
 }
 
 { (*derive hash*)
@@ -269,7 +264,7 @@ gimme Forall. autorewrite with seq.
 rewrite ? app_length.
 rewrite ? repeat_length.
 rewrite ? Forall_app. move => [_]; by inversion.
-apply : derivation_lc. by eassumption.
+apply : derivation_lc. eassumption.
 }
 
 { (*derive dollar*)
@@ -279,7 +274,7 @@ do 2 (apply in_cons).
 by constructor.
 
 constructor => //.
-apply : derivation_lc. by eassumption.
+apply : derivation_lc. eassumption.
 }
 Qed.
 
@@ -319,15 +314,13 @@ Lemma completeness_expand : forall (rs : list rule) (bound n : nat) (N : term),
   derivation n (Γ_all rs bound bound) N hash ->
   derivation n (Γ_all rs bound (1 + bound)) N dollar ->
   exists (n' : nat) (N' : term), 
-    lc 0 N' /\
     normal_form N' /\
     derivation n' (Γ_all rs 0 0) N' hash /\ 
     derivation n' (Γ_all rs 0 1) N' dollar.
 Proof.
 move => rs.
 elim.
-cbn. intros. do 2 eexists; firstorder (try eassumption).
-apply : derivation_lc. by eassumption.
+cbn; intros; do 2 eexists; eauto.
 
 move => bound IH n N; intros.
 
@@ -367,8 +360,7 @@ nip; first (apply y_pos_fresh).
 rewrite /s_pos. do ? inspect_eqb.
 apply.
 
-constructor.
-apply : Lc.bind_succ. apply : derivation_lc. by eassumption.
+constructor. apply : Lc.bind_succ. apply : derivation_lc. eassumption.
 }
 
 
@@ -394,8 +386,7 @@ nip; first (apply y_pos_fresh).
 rewrite /s_pos. do ? inspect_eqb.
 apply.
 
-constructor.
-apply : Lc.bind_succ. apply : derivation_lc. by eassumption.
+constructor. apply : Lc.bind_succ. apply : derivation_lc. eassumption.
 }
 
 { (*show star*)
@@ -424,8 +415,7 @@ nip; first (apply y_pos_fresh).
 rewrite /s_pos. do ? inspect_eqb.
 apply.
 
-constructor.
-apply : Lc.bind_succ. apply : derivation_lc. by eassumption.
+constructor. apply : Lc.bind_succ. apply : derivation_lc. eassumption.
 }
 
 do 2 constructor.
@@ -439,16 +429,11 @@ Lemma completeness_init : forall (rs : list rule) (n : nat) (N : term),
   normal_form N -> 
   derivation n (Γ_all rs 0 0) N hash ->
   derivation n (Γ_all rs 0 1) N dollar ->
-  exists (n' : nat) (N' : term), lc 0 N' /\ normal_form N' /\ derivation n' (Γ_init ++ Γ_step rs) N' triangle.
+  exists (n' : nat) (N' : term), normal_form N' /\ derivation n' (Γ_init ++ Γ_step rs) N' triangle.
 Proof.
 intros.
 exists (S n), (term_app (free_var x_init) N).
 split.
-do_first 2 constructor.
-apply : derivation_lc. by eassumption.
-
-split.
-
 eauto using normal_form, head_form.
 
 
@@ -463,7 +448,7 @@ by constructor.
 
 by do_last 3 constructor.
 
-apply : derivation_lc. by eassumption.
+apply : derivation_lc. eassumption.
 Qed.
 
 (*if 0..0 rewrites to 1..1, then triangle is inhabited in (Γ_init ++ Γ_step rs)*)
@@ -488,16 +473,16 @@ intros; omega.
 
 nip; first (apply repeat_length).
 
-move => [n [N [? [? [? ?]]]]].
+move => [n [N [? [? ?]]]].
 gimme Forall.
 move /completeness_star.
 do 2 (nip; first done).
 
 clear.
-move => [n [N [? [? [? [? ?]]]]]].
+move => [n [N [? [? [? ?]]]]].
 gimme Forall. move /completeness_expand.
 do 3 (nip; first auto).
 firstorder.
 gimme derivation where dollar. move /completeness_init.
-firstorder done.
+auto.
 Qed.
