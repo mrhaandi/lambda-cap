@@ -33,7 +33,7 @@ Lemma completeness_step : forall (rs : list rule) (bound : nat)  (v : list nat),
   Forall (fun '(i, a) => derivation (1+n) (Γ_all rs bound i) N (symbol a)) (indexed 0 v) /\
   derivation (1+n) (Γ_all rs bound (1 + bound)) N (symbol 1).
 Proof.
-intros until 0 => Hv.
+intros * => Hv.
 move Hw : (map (λ _ : nat, 1) v) => w.
 move => Hvw.
 elim : Hvw Hw Hv.
@@ -438,7 +438,7 @@ Theorem completeness : forall (rs : list rule) (m : nat),
   rewrites_to rs (repeat 0 (1+m)) (repeat 1 (1+m)) ->
   exists (n : nat) (N : term), normal_form N /\ derivation n (Γ_init ++ Γ_step rs) N triangle.
 Proof.
-intros until 0.
+intros *.
 have : (repeat 1 (1 + m)) = (map (fun _ => 1) (repeat 0 (1 + m))).
 elim : m; first done; cbn.
 intros; f_equal; auto.

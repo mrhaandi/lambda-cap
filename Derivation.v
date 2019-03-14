@@ -43,13 +43,13 @@ Theorem weakening : forall (n : nat) (Γ Γ': environment) (M: term) (t: formula
 Proof.
 elim.
 (*base case*)
-intros until 0.
+intros *.
 inversion.
 move /(_ _ ltac:(eassumption)).
 eauto using derivation.
 
 move => n IH.
-intros until 0; inversion.
+intros *; inversion.
 move /(_ _ ltac:(eassumption)).
 eauto using derivation.
 move => H_in.
@@ -214,7 +214,7 @@ Proof.
 move => n.
 apply (lt_wf_ind n).
 move => {n} n IH.
-intros until 0; inversion.
+intros *; inversion.
 
 auto using lc.
 

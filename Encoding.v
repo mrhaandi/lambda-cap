@@ -114,7 +114,7 @@ Proof. reflexivity. Qed.
 Lemma lookup_Γ_init : forall (x : label) (phi : formula'), 
   In (x, phi) Γ_init <-> (x = x_init /\ phi = s_init) \/ (x = x_star /\ phi = s_star) \/ (x = x_0 /\ phi = s_0) \/ (x = x_1 /\ phi = s_1).
 Proof.
-intros until 0.
+intros *.
 split.
 (do_last 4 case); case; firstorder auto.
 firstorder (subst; list_element).
@@ -124,7 +124,7 @@ Qed.
 Lemma lookup_Γ_step : forall (rs : list rule) (x : label) (phi : formula'), 
   In (x, phi) (Γ_step rs) <-> (fst x) = (fst (x_rule 0)) /\ (exists (i : nat) (r : rule), In (i, r) (indexed 0 rs) /\ x = x_rule i /\ phi = s_rule rs r).
 Proof.
-intros until 0.
+intros *.
 rewrite /Γ_step in_map_iff.
 split.
 move => [[i r] [H ?]].
@@ -136,7 +136,7 @@ Qed.
 Lemma lookup_Γ_lr : forall (bound i : nat) (x : label) (phi : formula'), 
   In (x, phi) (Γ_lr bound i) <-> (fst x) = (fst (y_pos 0)) /\ (exists (j : nat), In j (seq 0 bound) /\ x = y_pos j /\ phi = s_pos i j).
 Proof.
-intros until 0.
+intros *.
 rewrite /Γ_lr in_map_iff.
 split.
 move => [j [H ?]]; case : H. 
@@ -214,7 +214,7 @@ Lemma in_s_init_iff : forall (t : formula),
   In t s_init <-> 
     t = arr (cons' (atom hash) dollar) triangle.
 Proof.
-intros until 0.
+intros *.
 split; first by inversion.
 
 intro; subst; list_element.
@@ -226,7 +226,7 @@ Lemma in_s_star_iff : forall (t : formula),
     t = arr (arr isl star) hash \/
     t = arr (cons' (arr isr hash) (arr bullet dollar)) dollar.
 Proof.
-intros until 0.
+intros *.
 split.
 
 rewrite /s_star.
@@ -244,7 +244,7 @@ Lemma in_s_0_iff : forall (t : formula),
     t = arr (symbol 0) hash \/ 
     t = arr (symbol 1) dollar.
 Proof.
-intros until 0.
+intros *.
 split.
 
 rewrite /s_0.
@@ -264,7 +264,7 @@ Lemma in_s_rule_iff : forall (t : formula) (rs : list rule) (r : rule),
     t = arr isr (arr (symbol d) (symbol b)) \/
     (exists (e : nat), t = arr bullet (arr (symbol e) (symbol e)) /\ e < get_symbol_bound rs)).
 Proof.
-intros until 0.
+intros *.
 move : r => [[? ?][? ?]].
 rewrite /s_rule; autorewrite with list'.
 cbn; rewrite /s_id_rules in_map_iff.
@@ -348,7 +348,7 @@ Qed.
 Lemma rank_environment_bound : forall (rs : list rule) (x : label) (phi : formula'), 
   In (x, phi) (Γ_init ++ Γ_step rs) -> rank_formula' phi <= 2.
 Proof.
-intros until 0.
+intros *.
 autorewrite with lookup_Γ.
 firstorder; subst; cbn; try omega.
 

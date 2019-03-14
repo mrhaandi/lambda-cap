@@ -96,11 +96,11 @@ Qed.
 Lemma cd_derivation_soundness : forall (Γ: environment) (M : term) (t : formula),
    cd_derivation Γ M (singleton t) -> exists (n : nat), derivation n Γ M t.
 Proof.
-intros until 0.
+intros *.
 have [m H_m] := exists_term_depth M.
 move : m Γ M t H_m.
 elim /lt_wf_ind.
-move => m IH; intros until 0.
+move => m IH; intros *.
 inversion; inversion.
 
 {(*case var*)
